@@ -7,7 +7,6 @@ import ecore
 import evas
 import emotion
 import time
-import subprocess
 import pwd
 import grp
 
@@ -93,7 +92,7 @@ class UserManager(object):
         self.populate_users()
         self.populate_groups()
 
-        win.resize(400,400)
+        win.resize(400,465)
         win.show()
 
     def populate_users(self, *args):
@@ -112,7 +111,8 @@ class UserManager(object):
 
     def user_activated(self, item, genlist, data):
         cp = elementary.Ctxpopup(self.win)
-        cp.item_append("Modify", None, self.usermod, genlist.data)
+        cp.item_append("Information", None, self.usermod, genlist.data)
+        cp.item_append("Change Password", None, self.passwordchange, genlist.data)
         cp.item_append("Delete", None, self.userdel, genlist.data)
         pos = self.win.evas.pointer_canvas_xy_get()
         cp.pos = pos
@@ -120,7 +120,7 @@ class UserManager(object):
 
     def group_activated(self, item, genlist, data):
         cp = elementary.Ctxpopup(self.win)
-        cp.item_append("Modify", None, self.groupmod, genlist.data)
+        cp.item_append("Information", None, self.groupmod, genlist.data)
         cp.item_append("Delete", None, self.groupdel, genlist.data)
         pos = self.win.evas.pointer_canvas_xy_get()
         cp.pos = pos
@@ -130,7 +130,7 @@ class UserManager(object):
         print(btn, data)
 
     def add_user(self, btn=False, data=False):
-        usermk = elementary.StandardWindow("usermaker", "eCcess - Create new User")
+        usermk = elementary.StandardWindow("usermaker", "eCcess - Create User")
 
         bg = elementary.Background(usermk)
         usermk.resize_object_add(bg)
@@ -208,7 +208,7 @@ class UserManager(object):
         box.show()
 
         usermk.resize_object_add(box)
-        usermk.resize(300, 300)
+        usermk.resize(350, 300)
         usermk.show()
 
     def create_user(self, bnt, username, passwd1, passwd2):
@@ -225,6 +225,11 @@ class UserManager(object):
         cp = i.widget_get()
         cp.dismiss()
         self.users.item_simple_push(UserForm(self, user))
+
+    def passwordchange(self, l, i, user):
+        cp = i.widget_get()
+        cp.dismiss()
+        self.users.item_simple_push(PasswordForm(self, user))
 
     def userdel(self, l, i, user):
         cp = i.widget_get()
@@ -369,21 +374,16 @@ class Users(elementary.Naviframe):
 class UserForm(elementary.Box):
     def __init__(self, parent, user):
         elementary.Box.__init__(self, parent.win)
-
+        #self.parent = parent
         entries = {}
         ids = {}
 
-        for text, data in (("Username", user.pw_name), ("Password", user.pw_passwd), ("User ID", user.pw_uid), ("Group ID", user.pw_gid), ("Real name", user.pw_gecos), ("Home directory", user.pw_dir), ("Shell", user.pw_shell)):
+        for text, data in (("Username", user.pw_name), ("User ID", user.pw_uid), ("Group ID", user.pw_gid), ("Real name", user.pw_gecos.strip(",,,")), ("Home directory", user.pw_dir), ("Shell", user.pw_shell)):
             f = elementary.Frame(parent.win)
             f.size_hint_align = (-1.0, 0.0)
             f.text = text
-            if type(data) == int:
-                ids[text] = e = elementary.Spinner(parent.win)
-                e.min_max = (0, 65534)
-                e.value = data
-            else:
-                entries[text] = e = elementary.Entry(parent.win)
-                e.text = data
+            entries[text] = e = elementary.Label(parent.win)
+            e.text = str(data)
             e.show()
             f.content = e
             f.show()
@@ -395,6 +395,53 @@ class UserForm(elementary.Box):
         btn.show()
 
         self.pack_end(btn)
+
+class PasswordForm(elementary.Box):
+    def __init__(self, parent, user):
+        elementary.Box.__init__(self, parent.win)
+        self.main = parent
+        entries = {}
+        ids = {}
+
+        for text, data in (("Password", ""), ("Confirm Password", "")):
+            f = elementary.Frame(parent.win)
+            f.size_hint_align = (-1.0, 0.0)
+            f.text = text
+            entries[text] = e = elementary.Entry(parent.win)
+            e.text = str(data)
+            e.password = True
+            e.show()
+            f.content = e
+            f.show()
+            self.pack_end(f)
+
+        btn = elementary.Button(parent.win)
+        btn.text = "Cancel"
+        btn.callback_clicked_add(lambda x: parent.users.item_pop())
+        btn.show()
+
+        bbtn = elementary.Button(parent.win)
+        bbtn.text = "OK"
+        bbtn.callback_clicked_add(lambda x: parent.users.item_pop())
+        bbtn.callback_clicked_add(self.changePassword, entries)
+        bbtn.show()
+
+        bbox = elementary.Box(parent.win)
+        bbox.horizontal = True
+        bbox.pack_end(bbtn)
+        bbox.pack_end(btn)
+        bbox.show()
+
+        self.pack_end(bbox)
+
+    def changePassword(self, bnt, entries):
+        for e in entries:
+            print e
+            print entries[e].text
+        if entries["Password"].text == entries["Confirm Password"].text:
+            self.parent.run_command(False, False, "gksudo ''")
+        else:
+            self.main.popup_message("The entered passwords do not match. Please try again.", "eCcess - Password Mismatch")
 
 class Groups(elementary.Naviframe):
     def __init__(self, parent):
