@@ -158,17 +158,20 @@ class UserManager(object):
         entry1 = elementary.Entry(usermk)
         entry1.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         entry1.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        entry1.single_line = True
         entry1.show()
 
         entry2 = elementary.Entry(usermk)
         entry2.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         entry2.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        entry2.single_line = True
         entry2.password = True
         entry2.show()
 
         entry3 = elementary.Entry(usermk)
         entry3.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         entry3.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        entry3.single_line = True
         entry3.password = True
         entry3.show()
 
@@ -409,6 +412,7 @@ class PasswordForm(elementary.Box):
             f.text = text
             if not data:
                 entries[text] = e = elementary.Entry(parent.win)
+                e.single_line = True
                 e.password = True
             else:
                 entries[text] = e = elementary.Label(parent.win)
