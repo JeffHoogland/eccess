@@ -403,13 +403,16 @@ class PasswordForm(elementary.Box):
         entries = {}
         ids = {}
 
-        for text, data in (("Password", ""), ("Confirm Password", "")):
+        for text, data in (("Username", user.pw_name), ("Password", ""), ("Confirm Password", "")):
             f = elementary.Frame(parent.win)
             f.size_hint_align = (-1.0, 0.0)
             f.text = text
-            entries[text] = e = elementary.Entry(parent.win)
+            if not data:
+                entries[text] = e = elementary.Entry(parent.win)
+                e.password = True
+            else:
+                entries[text] = e = elementary.Label(parent.win)
             e.text = str(data)
-            e.password = True
             e.show()
             f.content = e
             f.show()
@@ -421,7 +424,7 @@ class PasswordForm(elementary.Box):
         btn.show()
 
         bbtn = elementary.Button(parent.win)
-        bbtn.text = "OK"
+        bbtn.text = "Change"
         bbtn.callback_clicked_add(lambda x: parent.users.item_pop())
         bbtn.callback_clicked_add(self.changePassword, entries)
         bbtn.show()
@@ -439,7 +442,7 @@ class PasswordForm(elementary.Box):
             print e
             print entries[e].text
         if entries["Password"].text == entries["Confirm Password"].text:
-            self.parent.run_command(False, False, "gksudo ''")
+            self.main.run_command(False, False, "gksudo 'changepass.sh %s %s'"%(entries["Username"].text, entries["Password"].text))
         else:
             self.main.popup_message("The entered passwords do not match. Please try again.", "eCcess - Password Mismatch")
 
