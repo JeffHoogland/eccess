@@ -87,6 +87,7 @@ class TimeManager(elementary.Box):
         elementary.Box.__init__(self, parent.mainWindow)
         self.win = win = parent.mainWindow
         self.rent = parent
+        self.timezones = getTimeZones()
 
         cframe = elementary.Frame(win)
         cframe.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
@@ -159,14 +160,13 @@ class TimeManager(elementary.Box):
 
     def edit_timezone( self, bt):
         print "In the edit time zone call back"
-        timezones = getTimeZones()
 
         zonelist = elementary.List(self.win)
         zonelist.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         zonelist.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         tmplist = []
-        for tz in timezones:
-            for each in timezones[tz]:
+        for tz in self.timezones:
+            for each in self.timezones[tz]:
                 if each not in tmplist:
                     tmplist.append(each)
         tmplist.sort()
@@ -205,18 +205,13 @@ class TimeManager(elementary.Box):
     def change_time( self, bt, zones ):
         print "Changing time zone to %s"%zones.selected_item_get().text
         self.run_command(False, False, "gksudo 'sudo cp -f /usr/share/zoneinfo/%s /etc/localtime'"%zones.selected_item_get().text)
+        self.zone.text = zones.selected_item_get().text
 
     def run_command(self, bnt, window, command):
         if window:
             window.hide()
         cmd = ecore.Exe(command)
-        cmd.on_del_event_add(self.refreshInterface)
-
-    def refreshInterface(self, event=False, cmd=False):
-        print "Refreshing interface"
-        self.zone.text = "<b>%s</b>"%time.tzname[0]
-        print time.tzname[0]
-        
+        #cmd.on_del_event_add(self.refreshInterface)
 
 class UserListClass(elementary.GenlistItemClass):
     def text_get(self, genlist, part, data):
