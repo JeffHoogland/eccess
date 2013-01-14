@@ -9,37 +9,46 @@ import emotion
 import time
 import pwd
 import grp
+import dateutil.tz as dtz
+import pytz
+import datetime as dt
+import collections
+
+def getTimeZones():
+    result=collections.defaultdict(list)
+    for name in pytz.common_timezones:
+        timezone=dtz.gettz(name)
+        now=dt.datetime.now(timezone)
+        offset=now.strftime('%z')
+        abbrev=now.strftime('%Z')
+        result[offset].append(name)
+        result[abbrev].append(name)    
+    return result
 
 class Eccess:
 
     def __init__( self ):
         self.mainWindow = elementary.StandardWindow("mainwindow", "eCcess - System Tool")
+        self.nf = elementary.Naviframe(self.mainWindow)
+        self.mainWindow.resize_object_add(self.nf)
+        self.nf.show()
 
     def users_groups( self, bt ):
         print "Users and groups CB"
-        UserManager()
+        self.nf.item_simple_push(UserManager(self))
 
     def time_date( self, bt ):
         print "Times and date CB"
-        TimeManager()
+        self.nf.item_simple_push(TimeManager(self))
 
     def launch( self, obj ):
         if obj is None:
             self.mainWindow.callback_delete_request_add(lambda o: elementary.exit())
-        
-        bg = elementary.Background(self.mainWindow)
-        self.mainWindow.resize_object_add(bg)
-        bg.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        bg.show()
-
-        #nf = elementary.Naviframe(self.mainWindow)
-        #nf.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        #self.mainWindow.resize_object_add(nf)
 
         tb = elementary.Table(self.mainWindow)
-        #nf.item_simple_push(tb)
+        self.nf.item_simple_push(tb)
         tb.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        self.mainWindow.resize_object_add(tb)
+        tb.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         tb.show()
 
         bt = elementary.Label(self.mainWindow)
@@ -68,10 +77,10 @@ class Eccess:
         self.mainWindow.resize(800, 300)
         self.mainWindow.show()
 
-class TimeManager(object):
-    def __init__(self):
-        win = self.win = elementary.StandardWindow("timemanager", "eCcess - Time and Date")
-        win.callback_delete_request_add(self.quit)
+class TimeManager(elementary.Box):
+    def __init__(self, parent):
+        elementary.Box.__init__(self, parent.mainWindow)
+        self.win = win = parent.mainWindow
 
         cframe = elementary.Frame(win)
         cframe.size_hint_align = (-1.0, 0.0)
@@ -128,17 +137,15 @@ class TimeManager(object):
         tzbox.pack_end(bt)
         tzbox.show()
 
-        box = elementary.Box(win)
-        box.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        box.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
-        box.pack_end(clockbox)
-        box.pack_end(tzbox)
-        box.show()
+        bck = elementary.Button(win)
+        bck.text = "Back"
+        bck.callback_clicked_add(lambda x: parent.nf.item_pop())
+        bck.show()
 
-        win.resize_object_add(box)
-
-        win.resize(400,165)
-        win.show()
+        self.pack_end(clockbox)
+        self.pack_end(tzbox)
+        self.pack_end(bck)
+        self.show()
 
     def edit_time( self, bt ):
         print "In the edit time call back"
@@ -157,36 +164,27 @@ class GroupListClass(elementary.GenlistItemClass):
     def text_get(self, genlist, part, data):
         return data.gr_name
 
-class UserManager(object):
-    def __init__(self):
+class UserManager(elementary.Flip):
+    def __init__(self, parent):
+        elementary.Flip.__init__(self, parent.mainWindow)
+
+        self.rent = parent
+        self.win = parent.mainWindow
         self.userlist = pwd.getpwall()
         self.grouplist = grp.getgrall()
 
-        win = self.win = elementary.StandardWindow("usermanager", "eCcess - Users and Groups")
-        win.callback_delete_request_add(self.quit)
-
-        ulist = self.ulist = elementary.Genlist(win)
-        glist = self.glist = elementary.Genlist(win)
-
-        flip = self.flip = elementary.Flip(win)
-        flip.interaction = elementary.ELM_FLIP_INTERACTION_ROTATE
-        flip.interaction_direction_enabled_set(elementary.ELM_FLIP_DIRECTION_LEFT, True)
-        flip.interaction_direction_hitsize_set(elementary.ELM_FLIP_DIRECTION_LEFT, 0.1)
-        flip.size_hint_weight = (1.0, 1.0)
-        win.resize_object_add(flip)
+        ulist = self.ulist = elementary.Genlist(self.win)
+        glist = self.glist = elementary.Genlist(self.win)
 
         users = self.users = Users(self)
         groups = self.groups = Groups(self)
 
-        flip.part_content_set("front", users)
-        flip.part_content_set("back", groups)
-        flip.show()
+        self.part_content_set("front", users)
+        self.part_content_set("back", groups)
+        self.show()
 
         self.populate_users()
         self.populate_groups()
-
-        win.resize(400,465)
-        win.show()
 
     def populate_users(self, *args):
         self.ulist.clear()
@@ -223,67 +221,61 @@ class UserManager(object):
         print(btn, data)
 
     def add_user(self, btn=False, data=False):
-        usermk = elementary.StandardWindow("usermaker", "eCcess - Create User")
-
-        bg = elementary.Background(usermk)
-        usermk.resize_object_add(bg)
-        bg.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        bg.show()
-
-        lbl1 = elementary.Label(usermk)
+        self.win.title = "eCcess - Create User"
+        
+        lbl1 = elementary.Label(self.win)
         lbl1.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         lbl1.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         lbl1.text = "Username:"
         lbl1.show()
 
-        lbl2 = elementary.Label(usermk)
+        lbl2 = elementary.Label(self.win)
         lbl2.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         lbl2.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         lbl2.text = "Password:"
         lbl2.show()
 
-        lbl3 = elementary.Label(usermk)
+        lbl3 = elementary.Label(self.win)
         lbl3.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         lbl3.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         lbl3.text = "Confirm Password:"
         lbl3.show()
 
-        entry1 = elementary.Entry(usermk)
+        entry1 = elementary.Entry(self.win)
         entry1.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         entry1.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         entry1.single_line = True
         entry1.show()
 
-        entry2 = elementary.Entry(usermk)
+        entry2 = elementary.Entry(self.win)
         entry2.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         entry2.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         entry2.single_line = True
         entry2.password = True
         entry2.show()
 
-        entry3 = elementary.Entry(usermk)
+        entry3 = elementary.Entry(self.win)
         entry3.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         entry3.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         entry3.single_line = True
         entry3.password = True
         entry3.show()
 
-        ok = elementary.Button(usermk)
+        ok = elementary.Button(self.win)
         ok.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         ok.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         ok.text = "Create User"
         ok.callback_pressed_add(self.create_user, entry1, entry2, entry3)
-        ok.callback_pressed_add(self.close, usermk)
         ok.show()
 
-        nvm = elementary.Button(usermk)
+        nvm = elementary.Button(self.win)
         nvm.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         nvm.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         nvm.text = "Cancel"
-        nvm.callback_pressed_add(self.close, usermk)
+        nvm.callback_pressed_add(lambda x: self.rent.nf.item_pop())
         nvm.show()
 
-        bbox = elementary.Box(usermk)
+        bbox = elementary.Box(self.win)
         bbox.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         bbox.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         bbox.horizontal = True
@@ -291,7 +283,7 @@ class UserManager(object):
         bbox.pack_end(nvm)
         bbox.show()
 
-        box = elementary.Box(usermk)
+        box = elementary.Box(self.win)
         box.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         box.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         box.pack_end(lbl1)
@@ -303,19 +295,18 @@ class UserManager(object):
         box.pack_end(bbox)
         box.show()
 
-        usermk.resize_object_add(box)
-        usermk.resize(350, 300)
-        usermk.show()
+        self.rent.nf.item_simple_push(box)
 
     def create_user(self, bnt, username, passwd1, passwd2):
         print "%s %s %s"%(username.text, passwd1.text, passwd2.text)
+        self.rent.nf.item_pop()
         if passwd1.text == passwd2.text:
             self.run_command(False, False, "gksudo 'useradd %s -m -p %s'"%(username.text, passwd1.text))
         else:
             self.popup_message("The entered passwords do not match. Please try again.", "eCcess - Password Mismatch", self.add_user)
 
     def flip_page(self, btn, data):
-        self.flip.go(elementary.ELM_FLIP_CUBE_RIGHT)
+        self.go(elementary.ELM_FLIP_CUBE_RIGHT)
 
     def usermod(self, l, i, user):
         cp = i.widget_get()
@@ -413,9 +404,6 @@ class UserManager(object):
     def toggle_system_users(self, check):
         self.populate_users()
 
-    def quit(self, *args):
-        self.win.hide()
-
 class Users(elementary.Naviframe):
     def __init__(self, parent):
         elementary.Naviframe.__init__(self, parent.win)
@@ -426,8 +414,8 @@ class Users(elementary.Naviframe):
 
         ulist = parent.ulist
         ulist.callback_activated_add(parent.user_activated, self)
-        ulist.size_hint_weight = (1.0, 1.0)
-        ulist.size_hint_align = (-1.0, -1.0)
+        ulist.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        ulist.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         ulist.show()
 
         bbtn = elementary.Button(parent.win)
@@ -439,6 +427,11 @@ class Users(elementary.Naviframe):
         grps.text = "Groups"
         grps.callback_clicked_add(parent.flip_page, self)
         grps.show()
+
+        bck = elementary.Button(parent.win)
+        bck.text = "Back"
+        bck.callback_clicked_add(lambda x: parent.rent.nf.item_pop())
+        bck.show()
 
         sep = elementary.Separator(parent.win)
         sep.show()
@@ -452,18 +445,19 @@ class Users(elementary.Naviframe):
         bbox.horizontal = True
         bbox.pack_end(bbtn)
         bbox.pack_end(grps)
+        bbox.pack_end(bck)
         bbox.pack_end(sep)
         bbox.pack_end(chk)
         bbox.show()
 
         box = elementary.Box(parent.win)
+        box.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        box.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         box.pack_end(lbl)
         box.pack_end(ulist)
         box.pack_end(bbox)
         box.show()
 
-        self.size_hint_weight = (1.0, 1.0)
-        self.size_hint_align = (-1.0, -1.0)
         self.item_simple_push(box)
         self.show()
 
@@ -567,10 +561,16 @@ class Groups(elementary.Naviframe):
         grps.callback_clicked_add(parent.flip_page, self)
         grps.show()
 
+        bck = elementary.Button(parent.win)
+        bck.text = "Back"
+        bck.callback_clicked_add(lambda x: parent.rent.nf.item_pop())
+        bck.show()
+
         bbox = elementary.Box(parent.win)
         bbox.horizontal = True
         bbox.pack_end(bbtn)
         bbox.pack_end(grps)
+        bbox.pack_end(bck)
         bbox.show()
 
         box = elementary.Box(parent.win)
