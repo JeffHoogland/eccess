@@ -1,6 +1,7 @@
 """A tool written in Python and Elementary to provide a GUI for configuring Unix users and groups"""
 
 import os
+import sys
 import elementary
 import edje
 import ecore
@@ -30,7 +31,12 @@ class Eccess:
     def __init__( self ):
         self.mainWindow = elementary.StandardWindow("mainwindow", "eCcess - System Tool")
         self.nf = elementary.Naviframe(self.mainWindow)
+        self.nf.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        #self.scroller = elementary.Scroller(self.mainWindow)
+        #self.scroller.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         self.mainWindow.resize_object_add(self.nf)
+        #self.scroller.content_set(self.nf)
+        #self.scroller.show()
         self.nf.show()
 
     def users_groups( self, bt ):
@@ -47,8 +53,7 @@ class Eccess:
 
         tb = elementary.Table(self.mainWindow)
         self.nf.item_simple_push(tb)
-        tb.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        tb.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        #tb.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         tb.show()
 
         bt = elementary.Label(self.mainWindow)
@@ -81,9 +86,12 @@ class TimeManager(elementary.Box):
     def __init__(self, parent):
         elementary.Box.__init__(self, parent.mainWindow)
         self.win = win = parent.mainWindow
+        self.rent = parent
 
         cframe = elementary.Frame(win)
-        cframe.size_hint_align = (-1.0, 0.0)
+        cframe.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        cframe.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        #cframe.size_hint_align = (-1.0, 0.0)
         cframe.text = "Current Time"
         cframe.show()
 
@@ -96,8 +104,8 @@ class TimeManager(elementary.Box):
 
         bt = elementary.Button(win)
         bt.text_set("Edit")
-        bt.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        bt.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        #bt.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        #bt.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         bt.callback_clicked_add(self.edit_time)
         bt.show()
 
@@ -109,14 +117,13 @@ class TimeManager(elementary.Box):
         clockbox.pack_end(bt)
         clockbox.show()
 
-        tzframe = elementary.Frame(win)
+        self.tzframe = tzframe = elementary.Frame(win)
         tzframe.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         tzframe.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
-        tzframe.size_hint_align = (-1.0, 0.0)
         tzframe.text = "Current Timezone"
         tzframe.show()
 
-        zone = elementary.Label(win)
+        self.zone = zone = elementary.Label(win)
         zone.text = "<b>%s</b>"%time.tzname[0]
         zone.show()
 
@@ -124,8 +131,8 @@ class TimeManager(elementary.Box):
 
         bt = elementary.Button(win)
         bt.text_set("Edit")
-        bt.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        bt.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        #bt.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        #bt.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         bt.callback_clicked_add(self.edit_timezone)
         bt.show()
 
@@ -152,9 +159,64 @@ class TimeManager(elementary.Box):
 
     def edit_timezone( self, bt):
         print "In the edit time zone call back"
+        timezones = getTimeZones()
 
-    def quit(self, *args):
-        self.win.hide()
+        zonelist = elementary.List(self.win)
+        zonelist.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        zonelist.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        tmplist = []
+        for tz in timezones:
+            for each in timezones[tz]:
+                if each not in tmplist:
+                    tmplist.append(each)
+        tmplist.sort()
+        for zone in tmplist:
+            zonelist.item_append(zone)
+        zonelist.show()
+
+        bbox = elementary.Box(self.win)
+        bbox.horizontal = True
+        #bbox.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        #bbox.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+
+        chng = elementary.Button(self.win)
+        chng.text = "Change"
+        chng.callback_clicked_add(lambda x: self.rent.nf.item_pop())
+        chng.callback_clicked_add(self.change_time, zonelist)
+        chng.show()
+
+        bck = elementary.Button(self.win)
+        bck.text = "Cancel"
+        bck.callback_clicked_add(lambda x: self.rent.nf.item_pop())
+        bck.show()
+        bbox.pack_end(chng)
+        bbox.pack_end(bck)
+        bbox.show()
+
+        box = elementary.Box(self.win)
+        box.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        box.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        box.pack_end(zonelist)
+        box.pack_end(bbox)
+        box.show()
+
+        self.rent.nf.item_simple_push(box)
+
+    def change_time( self, bt, zones ):
+        print "Changing time zone to %s"%zones.selected_item_get().text
+        self.run_command(False, False, "gksudo 'sudo cp -f /usr/share/zoneinfo/%s /etc/localtime'"%zones.selected_item_get().text)
+
+    def run_command(self, bnt, window, command):
+        if window:
+            window.hide()
+        cmd = ecore.Exe(command)
+        cmd.on_del_event_add(self.refreshInterface)
+
+    def refreshInterface(self, event=False, cmd=False):
+        print "Refreshing interface"
+        self.zone.text = "<b>%s</b>"%time.tzname[0]
+        print time.tzname[0]
+        
 
 class UserListClass(elementary.GenlistItemClass):
     def text_get(self, genlist, part, data):
@@ -480,7 +542,7 @@ class UserForm(elementary.Box):
             self.pack_end(f)
 
         btn = elementary.Button(parent.win)
-        btn.text = "Close"
+        btn.text = "Back"
         btn.callback_clicked_add(lambda x: parent.users.item_pop())
         btn.show()
 
