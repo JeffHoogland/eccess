@@ -30,13 +30,21 @@ class Eccess:
 
     def __init__( self ):
         self.mainWindow = elementary.StandardWindow("mainwindow", "eCcess - System Tool")
+        box = elementary.Box(self.mainWindow)
+        box.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        box.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         self.nf = elementary.Naviframe(self.mainWindow)
         self.nf.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        #self.scroller = elementary.Scroller(self.mainWindow)
-        #self.scroller.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        self.mainWindow.resize_object_add(self.nf)
-        #self.scroller.content_set(self.nf)
-        #self.scroller.show()
+        self.nf.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        self.scroller = elementary.Scroller(self.mainWindow)
+        self.scroller.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        self.scroller.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        box.pack_end(self.scroller)
+        box.show()
+        self.mainWindow.resize_object_add(box)
+        self.scroller.content_set(self.nf)
+        self.scroller.policy_set(0, 1)
+        self.scroller.show()
         self.nf.show()
 
     def users_groups( self, bt ):
@@ -182,7 +190,7 @@ class TimeManager(elementary.Box):
         chng = elementary.Button(self.win)
         chng.text = "Change"
         chng.callback_clicked_add(lambda x: self.rent.nf.item_pop())
-        chng.callback_clicked_add(self.change_time, zonelist)
+        chng.callback_clicked_add(self.change_timezone, zonelist)
         chng.show()
 
         bck = elementary.Button(self.win)
@@ -202,7 +210,7 @@ class TimeManager(elementary.Box):
 
         self.rent.nf.item_simple_push(box)
 
-    def change_time( self, bt, zones ):
+    def change_timezone( self, bt, zones ):
         print "Changing time zone to %s"%zones.selected_item_get().text
         self.run_command(False, False, "gksudo 'sudo cp -f /usr/share/zoneinfo/%s /etc/localtime'"%zones.selected_item_get().text)
         self.zone.text = zones.selected_item_get().text
@@ -540,7 +548,6 @@ class UserForm(elementary.Box):
         btn.text = "Back"
         btn.callback_clicked_add(lambda x: parent.users.item_pop())
         btn.show()
-
         self.pack_end(btn)
 
 class PasswordForm(elementary.Box):
