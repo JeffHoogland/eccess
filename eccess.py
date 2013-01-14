@@ -19,6 +19,10 @@ class Eccess:
         print "Users and groups CB"
         UserManager()
 
+    def time_date( self, bt ):
+        print "Times and date CB"
+        TimeManager()
+
     def launch( self, obj ):
         if obj is None:
             self.mainWindow.callback_delete_request_add(lambda o: elementary.exit())
@@ -53,8 +57,97 @@ class Eccess:
         tb.pack(bt, 1, 0, 1, 1)
         bt.show()
 
+        bt = elementary.Button(self.mainWindow)
+        bt.text_set("Time and Date")
+        bt.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        bt.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        bt.callback_clicked_add(self.time_date)
+        tb.pack(bt, 1, 1, 1, 1)
+        bt.show()
+
         self.mainWindow.resize(800, 300)
         self.mainWindow.show()
+
+class TimeManager(object):
+    def __init__(self):
+        win = self.win = elementary.StandardWindow("timemanager", "eCcess - Time and Date")
+        win.callback_delete_request_add(self.quit)
+
+        cframe = elementary.Frame(win)
+        cframe.size_hint_align = (-1.0, 0.0)
+        cframe.text = "Current Time"
+        cframe.show()
+
+        clock = elementary.Clock(win)
+        clock.show_seconds_set(True)
+        clock.show_am_pm_set(True)
+        clock.show()
+
+        cframe.content = clock
+
+        bt = elementary.Button(win)
+        bt.text_set("Edit")
+        bt.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        bt.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        bt.callback_clicked_add(self.edit_time)
+        bt.show()
+
+        clockbox = elementary.Box(win)
+        clockbox.horizontal = True
+        clockbox.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        clockbox.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        clockbox.pack_end(cframe)
+        clockbox.pack_end(bt)
+        clockbox.show()
+
+        tzframe = elementary.Frame(win)
+        tzframe.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        tzframe.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        tzframe.size_hint_align = (-1.0, 0.0)
+        tzframe.text = "Current Timezone"
+        tzframe.show()
+
+        zone = elementary.Label(win)
+        zone.text = "<b>%s</b>"%time.tzname[0]
+        zone.show()
+
+        tzframe.content = zone
+
+        bt = elementary.Button(win)
+        bt.text_set("Edit")
+        bt.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        bt.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        bt.callback_clicked_add(self.edit_timezone)
+        bt.show()
+
+        tzbox = elementary.Box(win)
+        tzbox.horizontal = True
+        tzbox.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        tzbox.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        tzbox.pack_end(tzframe)
+        tzbox.pack_end(bt)
+        tzbox.show()
+
+        box = elementary.Box(win)
+        box.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        box.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        box.pack_end(clockbox)
+        box.pack_end(tzbox)
+        box.show()
+
+        win.resize_object_add(box)
+
+        win.resize(400,165)
+        win.show()
+
+    def edit_time( self, bt ):
+        print "In the edit time call back"
+
+    def edit_timezone( self, bt):
+        print "In the edit time zone call back"
+
+    def quit(self, *args):
+        self.win.hide()
 
 class UserListClass(elementary.GenlistItemClass):
     def text_get(self, genlist, part, data):
