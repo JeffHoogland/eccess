@@ -30,22 +30,17 @@ class Eccess:
 
     def __init__( self ):
         self.mainWindow = elementary.StandardWindow("mainwindow", "eCcess - System Tool")
-        box = elementary.Box(self.mainWindow)
-        box.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        box.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         self.nf = elementary.Naviframe(self.mainWindow)
         self.nf.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         self.nf.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         self.scroller = elementary.Scroller(self.mainWindow)
-        self.scroller.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        self.scroller.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_FILL)
         self.scroller.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
-        box.pack_end(self.scroller)
-        box.show()
-        self.mainWindow.resize_object_add(box)
         self.scroller.content_set(self.nf)
         self.scroller.policy_set(0, 1)
-        self.scroller.show()
         self.nf.show()
+        self.mainWindow.resize_object_add(self.scroller)
+        self.scroller.show()
 
     def users_groups( self, bt ):
         print "Users and groups CB"
@@ -113,8 +108,6 @@ class TimeManager(elementary.Box):
 
         bt = elementary.Button(win)
         bt.text_set("Edit")
-        #bt.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        #bt.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         bt.callback_clicked_add(self.edit_time)
         bt.show()
 
@@ -140,8 +133,6 @@ class TimeManager(elementary.Box):
 
         bt = elementary.Button(win)
         bt.text_set("Edit")
-        #bt.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        #bt.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         bt.callback_clicked_add(self.edit_timezone)
         bt.show()
 
@@ -165,6 +156,41 @@ class TimeManager(elementary.Box):
 
     def edit_time( self, bt ):
         print "In the edit time call back"
+        clock = elementary.Clock(self.win)
+        clock.show_seconds_set(True)
+        clock.show_am_pm_set(True)
+        clock.edit_set(True)
+        clock.show()
+
+        bbox = elementary.Box(self.win)
+        bbox.horizontal = True
+
+        chng = elementary.Button(self.win)
+        chng.text = "Change"
+        chng.callback_clicked_add(lambda x: self.rent.nf.item_pop())
+        chng.callback_clicked_add(self.change_time, clock)
+        chng.show()
+
+        bck = elementary.Button(self.win)
+        bck.text = "Cancel"
+        bck.callback_clicked_add(lambda x: self.rent.nf.item_pop())
+        bck.show()
+        bbox.pack_end(chng)
+        bbox.pack_end(bck)
+        bbox.show()
+
+        box = elementary.Box(self.win)
+        box.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        box.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        box.pack_end(clock)
+        box.pack_end(bbox)
+        box.show()
+
+        self.rent.nf.item_simple_push(box)
+
+    def change_time( self, bt, clock):
+        print "In the change time function"
+        print clock.time_get()
 
     def edit_timezone( self, bt):
         print "In the edit time zone call back"
@@ -184,8 +210,6 @@ class TimeManager(elementary.Box):
 
         bbox = elementary.Box(self.win)
         bbox.horizontal = True
-        #bbox.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        #bbox.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
 
         chng = elementary.Button(self.win)
         chng.text = "Change"
@@ -286,21 +310,19 @@ class UserManager(elementary.Flip):
         print(btn, data)
 
     def add_user(self, btn=False, data=False):
-        self.win.title = "eCcess - Create User"
-        
-        lbl1 = elementary.Label(self.win)
+        lbl1 = elementary.Frame(self.win)
         lbl1.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         lbl1.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         lbl1.text = "Username:"
         lbl1.show()
 
-        lbl2 = elementary.Label(self.win)
+        lbl2 = elementary.Frame(self.win)
         lbl2.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         lbl2.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         lbl2.text = "Password:"
         lbl2.show()
 
-        lbl3 = elementary.Label(self.win)
+        lbl3 = elementary.Frame(self.win)
         lbl3.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         lbl3.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         lbl3.text = "Confirm Password:"
