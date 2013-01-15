@@ -29,18 +29,18 @@ def getTimeZones():
 class Eccess:
 
     def __init__( self ):
-        self.mainWindow = elementary.StandardWindow("mainwindow", "eCcess - System Tool")
+        self.mainWindow = elementary.StandardWindow("eCcess", "eCcess - System Tool")
         self.nf = elementary.Naviframe(self.mainWindow)
         self.nf.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         self.nf.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
-        self.scroller = elementary.Scroller(self.mainWindow)
-        self.scroller.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_FILL)
-        self.scroller.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
-        self.scroller.content_set(self.nf)
-        self.scroller.policy_set(0, 1)
+        #self.scroller = elementary.Scroller(self.mainWindow)
+        #self.scroller.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_FILL)
+        #self.scroller.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        #self.scroller.content_set(self.nf)
+        #self.scroller.policy_set(0, 1)
         self.nf.show()
-        self.mainWindow.resize_object_add(self.scroller)
-        self.scroller.show()
+        self.mainWindow.resize_object_add(self.nf)
+        #self.scroller.show()
 
     def users_groups( self, bt ):
         print "Users and groups CB"
@@ -190,7 +190,11 @@ class TimeManager(elementary.Box):
 
     def change_time( self, bt, clock):
         print "In the change time function"
-        print clock.time_get()
+        times = list(clock.time_get())
+        for x in times:
+            if x < 10:
+                times[times.index(x)] = "0%s"%x
+        self.run_command(False, False, "gksudo 'changetime.sh %s %s %s'"%(times[0], times[1], times[2]))
 
     def edit_timezone( self, bt):
         print "In the edit time zone call back"
@@ -207,6 +211,15 @@ class TimeManager(elementary.Box):
         for zone in tmplist:
             zonelist.item_append(zone)
         zonelist.show()
+
+        sframe = elementary.Frame(self.win)
+        sframe.text = "Search"
+        search = elementary.Entry(self.win)
+        search.single_line = True
+        search.callback_changed_add(self.search_change, zonelist)
+        sframe.content = search
+        search.show()
+        sframe.show()
 
         bbox = elementary.Box(self.win)
         bbox.horizontal = True
@@ -229,21 +242,25 @@ class TimeManager(elementary.Box):
         box.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         box.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         box.pack_end(zonelist)
+        box.pack_end(sframe)
         box.pack_end(bbox)
         box.show()
 
         self.rent.nf.item_simple_push(box)
 
+    def search_change( self, entry):
+        print entry.text
+        
+
     def change_timezone( self, bt, zones ):
         print "Changing time zone to %s"%zones.selected_item_get().text
-        self.run_command(False, False, "gksudo 'sudo cp -f /usr/share/zoneinfo/%s /etc/localtime'"%zones.selected_item_get().text)
+        self.run_command(False, False, "gksudo 'cp -f /usr/share/zoneinfo/%s /etc/localtime'"%zones.selected_item_get().text)
         self.zone.text = zones.selected_item_get().text
 
     def run_command(self, bnt, window, command):
         if window:
             window.hide()
         cmd = ecore.Exe(command)
-        #cmd.on_del_event_add(self.refreshInterface)
 
 class UserListClass(elementary.GenlistItemClass):
     def text_get(self, genlist, part, data):
@@ -333,6 +350,7 @@ class UserManager(elementary.Flip):
         entry1.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         entry1.single_line = True
         entry1.show()
+        lbl1.content = entry1
 
         entry2 = elementary.Entry(self.win)
         entry2.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
@@ -340,6 +358,7 @@ class UserManager(elementary.Flip):
         entry2.single_line = True
         entry2.password = True
         entry2.show()
+        lbl2.content = entry2
 
         entry3 = elementary.Entry(self.win)
         entry3.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
@@ -347,6 +366,7 @@ class UserManager(elementary.Flip):
         entry3.single_line = True
         entry3.password = True
         entry3.show()
+        lbl3.content = entry3
 
         ok = elementary.Button(self.win)
         ok.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
@@ -374,11 +394,11 @@ class UserManager(elementary.Flip):
         box.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         box.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         box.pack_end(lbl1)
-        box.pack_end(entry1)
+        #box.pack_end(entry1)
         box.pack_end(lbl2)
-        box.pack_end(entry2)
+        #box.pack_end(entry2)
         box.pack_end(lbl3)
-        box.pack_end(entry3)
+        #box.pack_end(entry3)
         box.pack_end(bbox)
         box.show()
 
