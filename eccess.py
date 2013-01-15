@@ -26,6 +26,12 @@ def getTimeZones():
         result[abbrev].append(name)    
     return result
 
+def searchList(text, lst):
+    for item in lst:
+        if text.lower() in item.lower()[:len(text)]:
+            return lst.index(item)
+    return 0
+
 class Eccess:
 
     def __init__( self ):
@@ -91,6 +97,8 @@ class TimeManager(elementary.Box):
         self.win = win = parent.mainWindow
         self.rent = parent
         self.timezones = getTimeZones()
+        self.zones = []
+        self.zoneitems = False
 
         cframe = elementary.Frame(win)
         cframe.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
@@ -202,21 +210,26 @@ class TimeManager(elementary.Box):
         zonelist = elementary.List(self.win)
         zonelist.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         zonelist.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
-        tmplist = []
+        self.zones = []
         for tz in self.timezones:
             for each in self.timezones[tz]:
-                if each not in tmplist:
-                    tmplist.append(each)
-        tmplist.sort()
-        for zone in tmplist:
+                if each not in self.zones:
+                    self.zones.append(each)
+        self.zones.sort()
+        for zone in self.zones:
             zonelist.item_append(zone)
         zonelist.show()
+        self.zoneitems = zonelist.items_get()
 
         sframe = elementary.Frame(self.win)
         sframe.text = "Search"
+        sframe.size_hint_weight = (1.0, 0.0)
+        sframe.size_hint_align = (-1.0, 0.0)
         search = elementary.Entry(self.win)
         search.single_line = True
-        search.callback_changed_add(self.search_change, zonelist)
+        search.size_hint_weight = (1.0, 0.0)
+        search.size_hint_align = (-1.0, 0.0)
+        search.callback_changed_add(self.search_change)
         sframe.content = search
         search.show()
         sframe.show()
@@ -248,9 +261,12 @@ class TimeManager(elementary.Box):
 
         self.rent.nf.item_simple_push(box)
 
-    def search_change( self, entry):
+    def search_change( self, entry ):
         print entry.text
-        
+        zeindex = searchList(entry.text, self.zones)
+        self.zoneitems[zeindex].selected_set(True)
+        self.zoneitems[zeindex].bring_in()
+        print self.zones[zeindex]
 
     def change_timezone( self, bt, zones ):
         print "Changing time zone to %s"%zones.selected_item_get().text
@@ -394,11 +410,8 @@ class UserManager(elementary.Flip):
         box.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         box.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         box.pack_end(lbl1)
-        #box.pack_end(entry1)
         box.pack_end(lbl2)
-        #box.pack_end(entry2)
         box.pack_end(lbl3)
-        #box.pack_end(entry3)
         box.pack_end(bbox)
         box.show()
 
