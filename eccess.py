@@ -26,6 +26,17 @@ def getTimeZones():
         result[abbrev].append(name)    
     return result
 
+def getGroups(user=False):
+    grouplist = []
+    if not user:
+        for group in grp.getgrall():
+            grouplist.append(group[0])
+    else:
+        for group in grp.getgrall():
+            if user in group[3]:
+                grouplist.append(group[0])
+    return grouplist
+
 def searchList(text, lst):
     for item in lst:
         if text.lower() in item.lower()[:len(text)]:
@@ -326,6 +337,7 @@ class UserManager(elementary.Flip):
         cp = elementary.Ctxpopup(self.win)
         cp.item_append("Information", None, self.usermod, genlist.data)
         cp.item_append("Change Password", None, self.passwordchange, genlist.data)
+        cp.item_append("Group Membership", None, self.usergroups, genlist.data)
         cp.item_append("Delete", None, self.userdel, genlist.data)
         pos = self.win.evas.pointer_canvas_xy_get()
         cp.pos = pos
@@ -333,14 +345,62 @@ class UserManager(elementary.Flip):
 
     def group_activated(self, item, genlist, data):
         cp = elementary.Ctxpopup(self.win)
-        cp.item_append("Information", None, self.groupmod, genlist.data)
         cp.item_append("Delete", None, self.groupdel, genlist.data)
         pos = self.win.evas.pointer_canvas_xy_get()
         cp.pos = pos
         cp.show()
 
-    def add(self, btn, data):
-        print(btn, data)
+    def add_group(self, btn=False, data=False):
+        lbl1 = elementary.Frame(self.win)
+        lbl1.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        lbl1.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        lbl1.text = "Group Name:"
+        lbl1.show()
+
+        entry1 = elementary.Entry(self.win)
+        entry1.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        entry1.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        entry1.single_line = True
+        entry1.show()
+        lbl1.content = entry1
+
+        ok = elementary.Button(self.win)
+        ok.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        ok.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        ok.text = "Create Group"
+        ok.callback_pressed_add(self.create_group, entry1)
+        ok.show()
+
+        nvm = elementary.Button(self.win)
+        nvm.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        nvm.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        nvm.text = "Cancel"
+        nvm.callback_pressed_add(lambda x: self.rent.nf.item_pop())
+        nvm.show()
+
+        bbox = elementary.Box(self.win)
+        bbox.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        bbox.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        bbox.horizontal = True
+        bbox.pack_end(ok)
+        bbox.pack_end(nvm)
+        bbox.show()
+
+        box = elementary.Box(self.win)
+        box.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        box.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        box.pack_end(lbl1)
+        #box.pack_end(lbl2)
+        #box.pack_end(lbl3)
+        box.pack_end(bbox)
+        box.show()
+
+        self.rent.nf.item_simple_push(box)
+
+    def create_group(self, bnt, groupname):
+        print "%s"%(groupname.text)
+        self.run_command(False, False, "gksudo 'groupadd %s'"%groupname.text)
+        self.rent.nf.item_pop()
 
     def add_user(self, btn=False, data=False):
         lbl1 = elementary.Frame(self.win)
@@ -433,6 +493,12 @@ class UserManager(elementary.Flip):
         cp.dismiss()
         self.users.item_simple_push(UserForm(self, user))
 
+    def usergroups(self, l, i, user):
+        cp = i.widget_get()
+        cp.dismiss()
+        print "%s"%user
+        self.users.item_simple_push(GroupsForm(self, user))
+
     def passwordchange(self, l, i, user):
         cp = i.widget_get()
         cp.dismiss()
@@ -512,14 +578,11 @@ class UserManager(elementary.Flip):
         self.populate_users()
         self.populate_groups()
 
-    def groupmod(self, l, i, group):
-        cp = i.widget_get()
-        cp.dismiss()
-        self.users.item_simple_push(UserForm(self, group))
-
     def groupdel(self, l, i, group):
         cp = i.widget_get()
         cp.dismiss()
+        print group[0]
+        self.confirm("Are you sure you want to delete the group '%s'"%group[0], "gksudo 'groupdel %s'"%group[0])
 
     def toggle_system_users(self, check):
         self.populate_users()
@@ -580,6 +643,96 @@ class Users(elementary.Naviframe):
 
         self.item_simple_push(box)
         self.show()
+
+class GroupsForm(elementary.Box):
+    def __init__(self, parent, user):
+        elementary.Box.__init__(self, parent.win)
+        self.rent = parent
+        self.username = user[0]
+
+        groups = getGroups()
+        self.usergroups = usergroups = getGroups(user[0])
+        
+        label = elementary.Label(parent.win)
+        label.text = "%s Groups:"%user[0]
+
+        itc = elementary.GengridItemClass(item_style="default",
+                                       content_get_func=self.check_return)
+
+        gg = elementary.Gengrid(parent.win)
+        gg.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        gg.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        gg.horizontal_set(False)
+        gg.bounce_set(False, True)
+        gg.item_size_set(140, 40)
+        gg.align_set(0.5, 0.0)
+        gg.show()
+        gg.select_mode_set(elementary.ELM_OBJECT_SELECT_MODE_NONE)
+
+        for group in groups:
+            gg.item_append(itc, [group, usergroups], None)
+
+        sc = elementary.Button(parent.win)
+        sc.text = "Save Changes"
+        sc.callback_clicked_add(self.save_changes, gg)
+        sc.show()
+
+        ngrp = elementary.Button(parent.win)
+        ngrp.text = "New Group"
+        ngrp.callback_clicked_add(lambda x: parent.add_group())
+        ngrp.show()
+
+        btn = elementary.Button(parent.win)
+        btn.text = "Back"
+        btn.callback_clicked_add(lambda x: parent.users.item_pop())
+        btn.show()
+
+        bbox = elementary.Box(parent.win)
+        bbox.horizontal = True
+        bbox.pack_end(sc)
+        bbox.pack_end(ngrp)
+        bbox.pack_end(btn)
+        bbox.show()
+
+        label.show()
+        self.pack_end(label)
+        self.pack_end(gg)
+        self.pack_end(bbox)
+
+    def check_sel( self, ck):
+        if ck.state_get():
+            self.usergroups.append(ck.text)
+        else:
+            self.usergroups.remove(ck.text)
+        print ck.text
+        print ck.state_get()
+        print self.usergroups
+
+    def save_changes( self, bt, gengrid ):
+        grps = ""
+        for group in self.usergroups:
+            if self.usergroups.index(group) == 0:
+                grps = "%s"%group
+            else:
+                grps = "%s,%s"%(grps, group)
+        print grps
+        self.rent.run_command(False, False, "gksudo 'usermod -G %s %s'"%(grps, self.username))
+        self.rent.users.item_pop()
+
+    def check_return( self, obj, part, data ):
+        if part == "elm.swallow.icon":
+            ck = elementary.Check(obj)
+            ck.text_set(data[0])
+            ck.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+            ck.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+            ck.callback_changed_add(self.check_sel)
+            if data[0] in data[1]:
+                ck.state_set(True)
+            return ck
+        return None
+
+    def group_toggle( self, chk ):
+        print chk.text
 
 class UserForm(elementary.Box):
     def __init__(self, parent, user):
@@ -672,7 +825,7 @@ class Groups(elementary.Naviframe):
 
         bbtn = elementary.Button(parent.win)
         bbtn.text = "Add Group"
-        bbtn.callback_clicked_add(parent.add, self)
+        bbtn.callback_clicked_add(parent.add_group, self)
         bbtn.show()
 
         grps = elementary.Button(parent.win)
