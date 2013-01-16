@@ -106,7 +106,6 @@ class TimeManager(elementary.Box):
         self.pack_end(clockbox)
         self.pack_end(tzbox)
         self.pack_end(bbox)
-        self.show()
 
     def time_from_internet( self, bt ):
         self.run_command(False, False, "gksudo 'ntpdate pool.ntp.org'")

@@ -7,6 +7,8 @@ import evas
 from optionsWindow import *
 from UserManager import *
 from TimeManager import *
+from TaskManager import *
+from ScreenSetup import *
 
 class Eccess(object):
     def __init__( self ):
@@ -40,7 +42,13 @@ class Eccess(object):
         print "Times and date CB"
         self.nf.item_simple_push(TimeManager(self))
 
+    def task_manager_spawn( self, bt=False ):
+        print "Task manager CB"
+        self.nf.item_simple_push(TaskManager(self))
 
+    def screen_setup_spawn( self, bt=False ):
+        print "Screen setup CB"
+        self.nf.item_simple_push(ScreenSetup(self))
 
 if __name__ == "__main__":
     GUI = Eccess()
