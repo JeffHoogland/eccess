@@ -9,32 +9,25 @@ class TaskManager(elementary.Box):
         self.win = win = parent.mainWindow
         self.rent = parent
         
-        idlst = elementary.List(win)
-        idlst.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        idlst.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        lbl = elementary.Label(self.win)
+        lbl.text = "Running Processes:"
+        lbl.show()
 
-        nlst = elementary.List(win)
-        nlst.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        nlst.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        itc = elementary.GenlistItemClass(item_style="default",
+                                       content_get_func=self.process_return)
+
+        self.gl = gl = elementary.Genlist(self.win)
+        gl.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+        gl.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
+        gl.bounce_set(False, True)
+        gl.show()
 
         self.processes = {}
         tmp = psutil.get_process_list()
         for p in tmp:
-            print p
-            if "kworker" not in p.name and "watchdog" not in p.name and p.pid > 100:
-                idlst.item_append("%s"%p.pid)
-                nlst.item_append("%s"%p.name)
-
-        idlst.show()
-        nlst.show()
-
-        lbox = elementary.Box(win)
-        lbox.horizontal = True
-        lbox.pack_end(idlst)
-        lbox.pack_end(nlst)
-	lbox.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
-        lbox.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
-        lbox.show()
+            #print p
+            if "kworker" not in p.name and and "getty" not in p.name "watchdog" not in p.name and p.pid > 100:
+                gl.item_append(itc, p, None)
 
         bck = elementary.Button(win)
         bck.text = "Back"
@@ -46,5 +39,31 @@ class TaskManager(elementary.Box):
         bbox.pack_end(bck)
         bbox.show()
 
-        self.pack_end(lbox)
+        self.pack_end(lbl)
+        self.pack_end(gl)
         self.pack_end(bbox)
+
+    def process_return( self, obj, part, data ):
+        print data.name
+        print data.pid
+        if part == "elm.swallow.icon":
+            box = elementary.Box(self.win)
+            box.horizontal = True
+            
+            pid = elementary.Label(self.win)
+            pid.text = str(data.pid)
+            pid.show()
+
+            sep = elementary.Separator(self.win)
+            sep.show()
+
+            pname = elementary.Label(self.win)
+            pname.text = data.name
+            pname.show()
+
+            box.pack_end(pid)
+            box.pack_end(sep)
+            box.pack_end(pname)
+
+            return box
+        return None

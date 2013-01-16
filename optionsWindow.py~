@@ -56,8 +56,7 @@ class optionsWindow(elementary.Table):
     def about( self, bt ):
         popup = elementary.Popup(self.win)
         popup.text = "Written in Elementary and Python - " \
-                        "By: Jeff Hoogland - " \
-                        "Special thanks to: Stephen Houston and Kai Huuhko"
+                        "By: Jeff Hoogland"
         popup.part_text_set("title,text", "About")
         bt = elementary.Button(self.win)
         bt.text = "OK"
