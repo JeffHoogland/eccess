@@ -32,7 +32,7 @@ class TaskManager(elementary.Box):
         lbox.horizontal = True
         lbox.pack_end(idlst)
         lbox.pack_end(nlst)
-        lbox.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
+	lbox.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         lbox.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         lbox.show()
 
