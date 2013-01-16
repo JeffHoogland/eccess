@@ -252,34 +252,18 @@ class UserManager(elementary.Flip):
         popup.show()
 
     def confirm(self, message, command):
-        popup = elementary.StandardWindow("popup", "eCcess - Please Confirm")
-
-        lbl = elementary.Label(popup)
-        lbl.text = message
-        lbl.show()
-
-        bbtn = elementary.Button(popup)
-        bbtn.text = "Cancel"
-        bbtn.callback_clicked_add(self.close, popup)
-        bbtn.show()
-
-        grps = elementary.Button(popup)
-        grps.text = "Yes"
-        grps.callback_clicked_add(self.run_command, popup, command)
-        grps.show()
-
-        bbox = elementary.Box(popup)
-        bbox.horizontal = True
-        bbox.pack_end(bbtn)
-        bbox.pack_end(grps)
-        bbox.show()
-
-        box = elementary.Box(popup)
-        box.pack_end(lbl)
-        box.pack_end(bbox)
-        box.show()
-
-        popup.resize_object_add(box)
+        popup = elementary.Popup(self.win)
+        popup.text = message
+        popup.part_text_set("title,text", "Please confirm")
+        bt = elementary.Button(self.win)
+        bt.text = "Cancel"
+        bt.callback_clicked_add(lambda x: popup.hide())
+        popup.part_content_set("button1", bt)
+        bt = elementary.Button(self.win)
+        bt.text = "Yes"
+        bt.callback_clicked_add(self.run_command, popup, command)
+        bt.callback_clicked_add(lambda x: popup.hide())
+        popup.part_content_set("button2", bt)
         popup.show()
 
     def close(self, bnt, window):
