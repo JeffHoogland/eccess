@@ -10,6 +10,7 @@ class TaskManager(elementary.Box):
         self.win = win = parent.mainWindow
         self.rent = parent
         self.appstokill = []
+        self.processes = []
         
         lbl = elementary.Label(self.win)
         lbl.text = "Running Processes:"
@@ -69,23 +70,23 @@ class TaskManager(elementary.Box):
         self.run_command(False, False, "kill -9 %s"%pid)
     
     def processes_build( self, cmd=False, arg=False ):
-        print "cmd %s , arg %s"%(cmd, arg)
+        #print "cmd %s , arg %s"%(cmd, arg)
         self.gl.clear()
+        self.processes = []
 
         itc = elementary.GenlistItemClass(item_style="default",
                                        content_get_func=self.process_return)
 
         tmp = psutil.get_process_list()
         for p in tmp:
-            #print p
-            #if "kworker" not in p.name and "getty" not in p.name and "watchdog" not in p.name and p.pid > 100:
             if os.getpgid(p.pid) > 1 and "getty" not in p.name:
                 self.gl.item_append(itc, p, None)
+                self.processes.append(p)
 
     def process_return( self, obj, part, data ):
         #print data.name
         #print data.pid
-        print "Name: %s , Group: %s"%(data.name, os.getpgid(data.pid))
+        #print "Name: %s , Group: %s"%(data.name, os.getpgid(data.pid))
         if part == "elm.swallow.icon":
             box = elementary.Box(self.win)
             box.horizontal = True

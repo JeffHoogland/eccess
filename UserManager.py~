@@ -241,10 +241,7 @@ class UserManager(elementary.Flip):
         print "%s %s %s"%(username.text, passwd1.text, passwd2.text)
         self.rent.nf.item_pop()
         if passwd1.text == passwd2.text:
-            if xtra.text:
-                self.run_command(False, False, "gksudo 'useradd %s -m -p %s %s'"%(username.text, passwd1.text, xtra.text))
-            else:
-                self.run_command(False, False, "gksudo 'useradd %s -m -p %s'"%(username.text, passwd1.text))
+            self.run_command(False, False, "gksudo 'useradd %s -m -p %s %s'"%(username.text, passwd1.text, xtra.text))
         else:
             self.popup_message("The entered passwords do not match. Please try again.", "Password Mismatch", self.add_user)
 
