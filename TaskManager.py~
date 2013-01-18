@@ -50,15 +50,15 @@ class TaskManager(elementary.Box):
         pname.callback_clicked_add(self.sort_by, "name")
         pname.show()
 
-        user = elementary.Label(self.win)
+        user = elementary.Button(self.win)
         user.text = "User"
         user.show()
 
-        cpu = elementary.Label(self.win)
+        cpu = elementary.Button(self.win)
         cpu.text = "CPU"
         cpu.show()
 
-        mem = elementary.Label(self.win)
+        mem = elementary.Button(self.win)
         mem.text = "Mem"
         mem.show()
 
