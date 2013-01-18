@@ -14,6 +14,7 @@ class TaskManager(elementary.Box):
     def __init__(self, parent):
         elementary.Box.__init__(self, parent.mainWindow)
         self.win = win = parent.mainWindow
+        self.sortmethod = "pid"
         self.rent = parent
         self.appstokill = []
         self.processid = {}
@@ -32,6 +33,7 @@ class TaskManager(elementary.Box):
 
         pid = elementary.Button(self.win)
         pid.text = "PID"
+        pid.callback_clicked_add(self.sort_by, "pid")
         pid.show()
 
         sep = elementary.Separator(self.win)
@@ -45,6 +47,7 @@ class TaskManager(elementary.Box):
 
         pname = elementary.Button(self.win)
         pname.text = "Process Name"
+        pname.callback_clicked_add(self.sort_by, "name")
         pname.show()
 
         user = elementary.Button(self.win)
@@ -103,6 +106,10 @@ class TaskManager(elementary.Box):
         self.pack_end(gl)
         self.pack_end(bbox)
 
+    def sort_by(self, bt, method):
+        self.sortmethod = method
+        self.processes_build()
+
     def update(self):
         for p in self.processid:
             for i in self.gl.realized_items_get():
@@ -137,13 +144,15 @@ class TaskManager(elementary.Box):
                                        content_get_func=self.process_return)
 
         tmp = psutil.get_process_list()
-        for p in tmp:
-            if p.username == getpass.getuser():
-                self.gl.item_append(itc, p, None)
-
-        #sdv = sortedDictValues(self.key)
-        #for v in sdv:
-        #    print v.name
+        if self.sortmethod == "pid":
+            for p in tmp:
+                if p.username == getpass.getuser():
+                    self.gl.item_append(itc, p, None)
+        elif self.sortmethod == "name":
+            #write some code to build the list based on process name
+            sdv = sortedDictValues(self.processname)
+            for v in sdv:
+                self.gl.item_append(itc, v.dt, None)
 
     def process_return( self, obj, part, data ):
         if part == "elm.swallow.icon":
@@ -166,8 +175,12 @@ class Process(elementary.Box):
 
         self.horizontal = True
         
+        pd = str(data.pid)
+        #while len(pd) < 8:
+        #    pd = " %s"%pd
+
         pid = elementary.Check(self.win)
-        pid.text = str(data.pid)
+        pid.text = pd
         pid.callback_changed_add(parent.check_sel)
         pid.show()
 
@@ -205,6 +218,7 @@ class Process(elementary.Box):
         self.pack_end(mem)
         self.pack_end(sep4)
         self.pack_end(pname)
+        self.show()
 
     def update(self):
         #print str(self.dt.get_cpu_percent(interval=0))
