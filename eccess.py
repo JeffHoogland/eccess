@@ -27,7 +27,7 @@ class Eccess(object):
         #self.scroller.show()
 
     def launch( self ):
-        self.mainWindow.resize(800, 300)
+        self.mainWindow.resize(800, 400)
         self.mainWindow.show()
         self.options_spawn()
 
