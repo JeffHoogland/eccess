@@ -14,7 +14,7 @@ class TaskManager(elementary.Box):
     def __init__(self, parent):
         elementary.Box.__init__(self, parent.mainWindow)
         self.win = win = parent.mainWindow
-        self.sortmethod = "pid"
+        self.sortmethod = ["pid", "normal"]
         self.rent = parent
         self.appstokill = []
         self.processid = {}
@@ -107,7 +107,13 @@ class TaskManager(elementary.Box):
         self.pack_end(bbox)
 
     def sort_by(self, bt, method):
-        self.sortmethod = method
+        if method == self.sortmethod[0]:
+            if self.sortmethod[1] == "normal":
+                self.sortmethod = [method, "reverse"]
+            else:
+                self.sortmethod = [method, "normal"]
+        else:
+            self.sortmethod = [method, "normal"]
         self.processes_build()
 
     def update(self):
@@ -143,14 +149,18 @@ class TaskManager(elementary.Box):
         itc = elementary.GenlistItemClass(item_style="default",
                                        content_get_func=self.process_return)
 
-        tmp = psutil.get_process_list()
-        if self.sortmethod == "pid":
+        if self.sortmethod[0] == "pid":
+            tmp = psutil.get_process_list()
+            if self.sortmethod[1] == "reverse":
+                tmp.reverse()
             for p in tmp:
                 if p.username == getpass.getuser():
                     self.gl.item_append(itc, p, None)
-        elif self.sortmethod == "name":
+        elif self.sortmethod[0] == "name":
             #write some code to build the list based on process name
             sdv = sortedDictValues(self.processname)
+            if self.sortmethod[1] == "reverse":
+                sdv.reverse()
             for v in sdv:
                 self.gl.item_append(itc, v.dt, None)
 
