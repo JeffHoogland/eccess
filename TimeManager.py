@@ -8,6 +8,8 @@ import dateutil.tz as dtz
 import pytz
 import datetime as dt
 import collections
+import esudo
+
 
 def getTimeZones():
     result=collections.defaultdict(list)
@@ -108,7 +110,7 @@ class TimeManager(elementary.Box):
         self.pack_end(bbox)
 
     def time_from_internet( self, bt ):
-        self.run_command(False, False, "gksudo 'ntpdate pool.ntp.org'")
+        self.run_command(False, False, 'ntpdate pool.ntp.org')
 
     def edit_time( self, bt ):
         print "In the edit time call back"
@@ -150,7 +152,7 @@ class TimeManager(elementary.Box):
         for x in times:
             if x < 10:
                 times[times.index(x)] = "0%s"%x
-        self.run_command(False, False, "gksudo 'changetime.sh %s %s %s'"%(times[0], times[1], times[2]))
+        self.run_command(False, False, 'changetime.sh %s %s %s'%(times[0], times[1], times[2]))
 
     def edit_timezone( self, bt):
         print "In the edit time zone call back"
@@ -208,6 +210,7 @@ class TimeManager(elementary.Box):
         box.show()
 
         self.rent.nf.item_simple_push(box)
+        search.focus = True
 
     def search_change( self, entry ):
         print entry.text
@@ -218,10 +221,10 @@ class TimeManager(elementary.Box):
 
     def change_timezone( self, bt, zones ):
         print "Changing time zone to %s"%zones.selected_item_get().text
-        self.run_command(False, False, "gksudo 'cp -f /usr/share/zoneinfo/%s /etc/localtime'"%zones.selected_item_get().text)
+        self.run_command(False, False, 'cp -f /usr/share/zoneinfo/%s /etc/localtime'%zones.selected_item_get().text)
         self.zone.text = zones.selected_item_get().text
 
     def run_command(self, bnt, window, command):
         if window:
             window.hide()
-        cmd = ecore.Exe(command)
+        cmd = esudo.eSudo(command, self.win)

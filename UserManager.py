@@ -5,6 +5,7 @@ import ecore
 import evas
 import pwd
 import grp
+import esudo
 
 
 def getGroups(user=False):
@@ -138,14 +139,15 @@ class UserManager(elementary.Flip):
         box.show()
 
         self.rent.nf.item_simple_push(box)
+        entry1.focus = True
 
     def create_group(self, bnt, groupname, xtra):
         print "%s"%(groupname.text)
         print xtra.text
         if xtra.text:
-            self.run_command(False, False, "gksudo 'groupadd %s %s'"%(xtra.text, groupname.text))
+            self.run_command(False, False, 'groupadd %s %s'%(xtra.text, groupname.text))
         else:
-            self.run_command(False, False, "gksudo 'groupadd %s'"%(groupname.text))
+            self.run_command(False, False, 'groupadd %s'%(groupname.text))
         self.rent.nf.item_pop()
 
     def add_user(self, btn=False, data=False):
@@ -236,15 +238,16 @@ class UserManager(elementary.Flip):
         box.show()
 
         self.rent.nf.item_simple_push(box)
+        entry1.focus = True
 
     def create_user(self, bnt, username, passwd1, passwd2, xtra):
         print "%s %s %s"%(username.text, passwd1.text, passwd2.text)
         self.rent.nf.item_pop()
         if passwd1.text == passwd2.text:
             if xtra.text:
-                self.run_command(False, False, "gksudo 'useradd %s -m -p %s %s'"%(username.text, passwd1.text, xtra.text))
+                self.run_command(False, False, 'useradd %s -m -p %s %s'%(username.text, passwd1.text, xtra.text))
             else:
-                self.run_command(False, False, "gksudo 'useradd %s -m -p %s'"%(username.text, passwd1.text))
+                self.run_command(False, False, 'useradd %s -m -p %s'%(username.text, passwd1.text))
         else:
             self.popup_message("The entered passwords do not match. Please try again.", "Password Mismatch", self.add_user)
 
@@ -271,7 +274,7 @@ class UserManager(elementary.Flip):
         cp = i.widget_get()
         cp.dismiss()
         print user[0]
-        self.confirm("Are you sure you want to delete the user '%s'"%user[0], "gksudo 'userdel %s'"%user[0])
+        self.confirm("Are you sure you want to delete the user '%s'"%user[0], 'userdel %s'%user[0])
 
     def popup_message(self, message, title, callback=False):
         popup = elementary.Popup(self.win)
@@ -306,8 +309,8 @@ class UserManager(elementary.Flip):
     def run_command(self, bnt, window, command):
         if window:
             window.hide()
-        cmd = ecore.Exe(command)
-        cmd.on_del_event_add(self.refreshInterface)
+        cmd = esudo.eSudo(command, self.win, end_callback=self.refreshInterface)
+        #cmd.on_del_event_add(self.refreshInterface)
 
     def refreshInterface( self , event=False, cmd=False):
         self.userlist = pwd.getpwall()
@@ -319,7 +322,7 @@ class UserManager(elementary.Flip):
         cp = i.widget_get()
         cp.dismiss()
         print group[0]
-        self.confirm("Are you sure you want to delete the group '%s'"%group[0], "gksudo 'groupdel %s'"%group[0])
+        self.confirm("Are you sure you want to delete the group '%s'"%group[0], 'groupdel %s'%group[0])
 
     def toggle_system_users(self, check):
         self.populate_users()
@@ -453,7 +456,7 @@ class GroupsForm(elementary.Box):
             else:
                 grps = "%s,%s"%(grps, group)
         print grps
-        self.rent.run_command(False, False, "gksudo 'usermod -G %s %s'"%(grps, self.username))
+        self.rent.run_command(False, False, 'usermod -G %s %s'%(grps, self.username))
         self.rent.users.item_pop()
 
     def check_return( self, obj, part, data ):
@@ -542,7 +545,7 @@ class PasswordForm(elementary.Box):
             print e
             print entries[e].text
         if entries["Password"].text == entries["Confirm Password"].text:
-            self.main.run_command(False, False, "gksudo 'changepass.sh %s %s'"%(entries["Username"].text, entries["Password"].text))
+            self.main.run_command(False, False, 'changepass.sh %s %s'%(entries["Username"].text, entries["Password"].text))
         else:
             self.main.popup_message("The entered passwords do not match. Please try again.", "Password Mismatch")
 
