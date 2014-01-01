@@ -88,8 +88,6 @@ class TaskManager(elementary.Box):
 
     def kill_process( self, bt, pid ):
         self.run_command(False, False, "kill -9 %s"%pid)
-        self.slist.row_unpack(self.process[pid], True)
-        self.process.pop(pid, None)
     
     def processes_build( self, cmd=False, arg=False ):
         #print "cmd %s , arg %s"%(cmd, arg)
@@ -97,13 +95,16 @@ class TaskManager(elementary.Box):
         tmp = psutil.get_process_list()
         currentpids = []
         pidstoremove = []
-        for p in tmp:
-            if p.username == getpass.getuser():
-                currentpids.append(p.pid)
-                if p.pid not in self.process:
-                    cess = Process(self, p)
-                    self.process[p.pid] = cess
-                    self.slist.row_pack(cess, sort=False)
+        try:
+            for p in tmp:
+                if p.username == getpass.getuser():
+                    currentpids.append(p.pid)
+                    if p.pid not in self.process:
+                        cess = Process(self, p)
+                        self.process[p.pid] = cess
+                        self.slist.row_pack(cess, sort=False)
+        except:
+            print "Hit an exception. Might want to look into that if stuff isn't working right"
         for pid in self.process:
             if pid not in currentpids:
                 self.slist.row_unpack(self.process[pid], True)
