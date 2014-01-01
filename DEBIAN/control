@@ -1,0 +1,9 @@
+Package: eccess
+Version: 20140101.2
+Section: main
+Priority: optional
+Architecture: all
+Depends: python-efl
+Maintainer: Jeff Hoogland
+Description: eCcess System Tool
+ A tool editing system properties written in python and EFL. Supports user, process and time managment.

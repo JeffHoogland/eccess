@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=eCcess System Tool
+GenericName=System Tool
+Comment=Manage System Settings
+Exec=eccess
+Icon=eccess.png
+Terminal=false
+Type=Application
+Categories=System;Settings;
