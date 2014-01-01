@@ -17,7 +17,7 @@ class TaskManager(elementary.Box):
         self.appstokill = []
         self.process = {}
         
-        #self.loop = ecore.timer_add(0.5, self.update)
+        self.loop = ecore.timer_add(0.5, self.update)
         
         lbl = elementary.Label(self.win)
         lbl.text = "Running Processes:"
@@ -63,8 +63,10 @@ class TaskManager(elementary.Box):
         self.pack_end(bbox)
 
     def update(self):
+        self.processes_build()
         for p in self.process:
-            self.processid[p].update()
+            self.process[p].update()
+        self.slist.update()
         return 1
 
     def run_command(self, bnt, window, command):
@@ -87,16 +89,27 @@ class TaskManager(elementary.Box):
     def kill_process( self, bt, pid ):
         self.run_command(False, False, "kill -9 %s"%pid)
         self.slist.row_unpack(self.process[pid], True)
+        self.process.pop(pid, None)
     
     def processes_build( self, cmd=False, arg=False ):
         #print "cmd %s , arg %s"%(cmd, arg)
 
         tmp = psutil.get_process_list()
+        currentpids = []
+        pidstoremove = []
         for p in tmp:
             if p.username == getpass.getuser():
-                cess = Process(self, p)
-                self.process[p.pid] = cess
-                self.slist.row_pack(cess, sort=False)
+                currentpids.append(p.pid)
+                if p.pid not in self.process:
+                    cess = Process(self, p)
+                    self.process[p.pid] = cess
+                    self.slist.row_pack(cess, sort=False)
+        for pid in self.process:
+            if pid not in currentpids:
+                self.slist.row_unpack(self.process[pid], True)
+                pidstoremove.append(pid)
+        for pid in pidstoremove:
+            self.process.pop(pid, None)
 
 class Process(list):
     def __init__(self, parent, data):
