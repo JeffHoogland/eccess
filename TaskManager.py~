@@ -86,7 +86,6 @@ class TaskManager(elementary.Box):
 
     def kill_process( self, bt, pid ):
         self.run_command(False, False, "kill -9 %s"%pid)
-        self.slist.row_unpack(self.process[pid], True)
     
     def processes_build( self, cmd=False, arg=False ):
         #print "cmd %s , arg %s"%(cmd, arg)

@@ -53,8 +53,8 @@ class optionsWindow(elementary.Box):
         bt.size_hint_weight_set(evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND)
         bt.size_hint_align_set(evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL)
         bt.callback_clicked_add(parent.task_manager_spawn)
-        b2.pack_end(bt)
-        bt.show()
+        #b2.pack_end(bt)
+        #bt.show()
 
         bt = elementary.Button(parent.mainWindow)
         bt.text_set("Screen Resolution")

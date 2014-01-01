@@ -51,7 +51,6 @@ class Eccess(object):
         self.nf.item_simple_push(ScreenSetup(self))
 
 if __name__ == "__main__":
-    elementary.init()
     GUI = Eccess()
     GUI.launch()
     elementary.run()    
