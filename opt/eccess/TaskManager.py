@@ -16,18 +16,51 @@ class TaskManager(elementary.Box):
         self.rent = parent
         self.appstokill = []
         self.process = {}
+        self.updatecpu = 0.0
         
-        self.loop = ecore.timer_add(0.5, self.update)
+        self.loop = ecore.timer_add(.5, self.update)
         
-        lbl = elementary.Label(self.win)
-        lbl.text = "Running Processes:"
-        lbl.show()
+        cpus = psutil.cpu_percent(interval=1, percpu=True)
+        ram = psutil.virtual_memory()
+
+        #Totals in GB
+        ramtota = float(ram.total) / (1000000000)
+        ramused = float(ram.used) / (1000000000)
+
+        ramframe = self.ramframe = elementary.Frame(self.win)
+        ramframe.show()
+        ramframe.text_set("RAM Usage:")
+
+        cpuframe = self.cpuframe = elementary.Frame(self.win)
+        cpuframe.show()
+        cpuframe.text_set("CPU Usage:")
+        cpuframe.size_hint_weight = (0.20, 0.20)
+        cpuframe.size_hint_align = FILL_BOTH
+
+        cputbl = self.cputbl = elementary.Table(self.win)
+        cputbl.show()
+        cpuframe.content = cputbl
+
+        self.cpulist = []
+
+        count = 0
+        for cpu in cpus:
+            cpulbl = elementary.Label(self.win)
+            cpulbl.text = "%s"%str(cpu)
+            cpulbl.show()
+            cputbl.pack(cpulbl, count*2, 0, 1, 1)
+            self.cpulist.append(cpulbl)
+            if cpus.index(cpu) < len(cpus):
+                spe = elementary.Separator(self.win)
+                spe.show()
+                cputbl.pack(spe, count*2+1, 0, 1, 1)
+            count += 1
 
         scr = elementary.Scroller(self.win)
         scr.size_hint_weight = EXPAND_BOTH
         scr.size_hint_align = FILL_BOTH
 
-        titles = [("PID", True), ("User", True), ("CPU", True), ("Memory", True), ("Process Name", True), ("", False)]
+        titles = [("PID", True), ("User", True), ("CPU", True), ("Memory", True), ("Process Name", True)]
 
         self.slist = slist = sl.SortedList(self, titles=titles,   size_hint_weight=EXPAND_BOTH,
             size_hint_align=FILL_BOTH, homogeneous=True)
@@ -58,7 +91,7 @@ class TaskManager(elementary.Box):
         bbox.pack_end(bck)
         bbox.show()
 
-        self.pack_end(lbl)
+        self.pack_end(cpuframe)
         self.pack_end(scr)
         self.pack_end(bbox)
 
@@ -67,6 +100,17 @@ class TaskManager(elementary.Box):
         for p in self.process:
             self.process[p].update()
         self.slist.update()
+
+        self.updatecpu += .5
+        if self.updatecpu > 2.5:
+            cpus = psutil.cpu_percent(interval=1, percpu=True)
+            count = 0
+            for cpu in cpus:
+                #print cpu
+                self.cpulist[count].text = "%s"%cpu
+                count += 1
+            self.updatecpu = 0.0
+
         return 1
 
     def run_command(self, bnt, window, command):
@@ -142,17 +186,17 @@ class Process(list):
         mem.text = "%.2f"%data.get_memory_percent()
         mem.show()
 
-        bt = elementary.Button(self.win)
-        bt.text = "Kill Process"
-        bt.callback_pressed_add(parent.kill_process, data.pid)
-        bt.show()
+        #bt = elementary.Button(self.win)
+        #bt.text = "Kill Process"
+        #bt.callback_pressed_add(parent.kill_process, data.pid)
+        #bt.show()
 
         self.append(pid)
         self.append(user)
         self.append(cpu)
         self.append(mem)
         self.append(pname)
-        self.append(bt)
+        #self.append(bt)
 
     def update(self):
         #print str(self.dt.get_cpu_percent(interval=0))
