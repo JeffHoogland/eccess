@@ -8,6 +8,7 @@ import sortedlist as sl
 
 EXPAND_BOTH = evas.EVAS_HINT_EXPAND, evas.EVAS_HINT_EXPAND
 FILL_BOTH = evas.EVAS_HINT_FILL, evas.EVAS_HINT_FILL
+FILL_HORIZ = evas.EVAS_HINT_FILL, 0.5
 
 class TaskManager(elementary.Box):
     def __init__(self, parent):
@@ -29,7 +30,16 @@ class TaskManager(elementary.Box):
 
         ramframe = self.ramframe = elementary.Frame(self.win)
         ramframe.show()
+        ramframe.size_hint_weight = (0.20, 0.20)
+        ramframe.size_hint_align = FILL_BOTH
         ramframe.text_set("RAM Usage:")
+
+        self.rambar = rambar = elementary.Progressbar(self.win, span_size=300, size_hint_weight=EXPAND_BOTH,
+        size_hint_align=FILL_HORIZ)
+        rambar.show()
+        rambar.value_set(ramused/ramtota)
+
+        ramframe.content = rambar
 
         cpuframe = self.cpuframe = elementary.Frame(self.win)
         cpuframe.show()
@@ -92,6 +102,7 @@ class TaskManager(elementary.Box):
         bbox.show()
 
         self.pack_end(cpuframe)
+        self.pack_end(ramframe)
         self.pack_end(scr)
         self.pack_end(bbox)
 
@@ -110,6 +121,14 @@ class TaskManager(elementary.Box):
                 self.cpulist[count].text = "%s"%cpu
                 count += 1
             self.updatecpu = 0.0
+
+            ram = psutil.virtual_memory()
+
+            #Totals in GB
+            ramtota = float(ram.total) / (1000000000)
+            ramused = float(ram.used) / (1000000000)
+
+            self.rambar.value_set(ramused/ramtota)
 
         return 1
 
