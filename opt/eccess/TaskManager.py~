@@ -222,7 +222,7 @@ class Process(list):
     def update(self):
         #print str(self.dt.get_cpu_percent(interval=0))
         self.cpu.text = str(self.dt.get_cpu_percent(interval=0))
-        self.cpu.data["sort_data"] = self.dt.get_cpu_percent(interval=0)
+        self.cpu.data["sort_data"] = data.get_cpu_percent(interval=0)
         #print self.dt.get_memory_percent()
         self.mem.text = "%.2f"%self.dt.get_memory_percent()
-        self.mem.data["sort_data"] = self.dt.get_memory_percent()
+        self.mem.data["sort_data"] = data.get_memory_percent()
